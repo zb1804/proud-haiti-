@@ -7,6 +7,7 @@ Language Features:
 
 Compiler Features:
  * LSP: Add rudimentary support for semantic highlighting.
+ * Yul EVM Code Transform: Generate more optimal code for user-defined functions that always terminate a transaction. No return labels will be pushed for calls to functions that always terminate.
  * Yul Optimizer: Improve inlining heuristics for via IR code generation and pure Yul compilation.
 
 
