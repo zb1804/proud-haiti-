@@ -60,7 +60,7 @@ public:
 	FileRepository& fileRepository() noexcept { return m_fileRepository; }
 	Transport& client() noexcept { return m_client; }
 	frontend::ASTNode const* astNodeAtSourceLocation(std::string const& _sourceUnitName, langutil::LineColumn const& _filePos);
-	langutil::CharStreamProvider const& charStreamProvider() const noexcept { return m_compilerStack; }
+	frontend::CompilerStack const& compilerStack() const noexcept { return m_compilerStack; }
 
 private:
 	/// Checks if the server is initialized (to be used by messages that need it to be initialized).
@@ -72,6 +72,7 @@ private:
 	void handleTextDocumentDidOpen(Json::Value const& _args);
 	void handleTextDocumentDidChange(Json::Value const& _args);
 	void handleTextDocumentDidClose(Json::Value const& _args);
+	void handleRename(Json::Value const& _args);
 	void handleGotoDefinition(MessageID _id, Json::Value const& _args);
 	void semanticTokensFull(MessageID _id, Json::Value const& _args);
 
