@@ -50,14 +50,13 @@ void RenameSymbol::operator()(MessageID _id, Json::Value const& _args)
 	// TODO handling of UsingForDirective
 	if (auto const* declaration = dynamic_cast<Declaration const*>(sourceNode))
 	{
+		optional<int> sourcePos = charStreamProvider()
+			.charStream(sourceUnitName)
+			.translateLineColumnToPosition(lineColumn);
+		solAssert(sourcePos.has_value(), "Expected source pos");
+
 		if (auto const* importDirective = dynamic_cast<ImportDirective const*>(declaration))
 		{
-			optional<int> sourcePos = charStreamProvider()
-				.charStream(sourceUnitName)
-				.translateLineColumnToPosition(lineColumn);
-
-			solAssert(sourcePos.has_value(), "Expected source pos");
-
 			for (ImportDirective::SymbolAlias const& symbolAlias: importDirective->symbolAliases())
 				if (symbolAlias.location.containsOffset(*sourcePos))
 				{
@@ -67,7 +66,7 @@ void RenameSymbol::operator()(MessageID _id, Json::Value const& _args)
 					break;
 				}
 		}
-		else
+		else if (declaration->nameLocation().containsOffset(*sourcePos)
 		{
 			m_symbolName = declaration->name();
 			m_node = declaration;
@@ -144,6 +143,8 @@ void RenameSymbol::operator()(MessageID _id, Json::Value const& _args)
 
 void RenameSymbol::Visitor::endVisit(frontend::ImportDirective const& _node)
 {
+	// If an import directive is to be renamed, it can only be because it
+	// defines the symbol that is being renamed.
 	if (&_node != m_outer.m_node)
 		return;
 
@@ -156,3 +157,7 @@ void RenameSymbol::Visitor::endVisit(frontend::ImportDirective const& _node)
 	solAssert(sizeBefore < m_outer.m_locations.size(), "Found no source location in ImportDirective?!");
 }
 
+void RenameSymbol::Visitor::endVisit(frontend::IdentifierPath const& _node)
+{
+	if (_node.
+}

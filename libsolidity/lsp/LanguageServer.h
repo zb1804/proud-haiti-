@@ -33,6 +33,7 @@
 namespace solidity::lsp
 {
 
+class RenameSymbol;
 enum class ErrorCode;
 
 /**

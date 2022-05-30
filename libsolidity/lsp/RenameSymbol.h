@@ -29,16 +29,20 @@ public:
 
 	void operator()(MessageID, Json::Value const&);
 protected:
+	// Nested class because otherwise `RenameSymbol` couldn't be easily used
+	// with LanguageServer::m_handlers as `ASTConstVisitor` deletes required
+	// c'tors
 	struct Visitor: public frontend::ASTConstVisitor
 	{
 		explicit Visitor(RenameSymbol& _outer): m_outer(_outer) {}
 		void endVisit(frontend::ImportDirective const& _node) override;
 		void endVisit(frontend::Identifier const& _node) override { endVisitNode(_node); }
-		void endVisit(frontend::IdentifierPath const& _node) override { endVisitNode(_node); }
+		void endVisit(frontend::IdentifierPath const& _node) override;
 
 		private:
 			RenameSymbol& m_outer;
 	};
+
 	// Node to rename
 	frontend::Declaration const* m_node = nullptr;
 	// Original name
