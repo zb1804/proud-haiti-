@@ -42,7 +42,7 @@ void RenameSymbol::operator()(MessageID _id, Json::Value const& _args)
 	ASTNode const* sourceNode = m_server.astNodeAtSourceLocation(sourceUnitName, lineColumn);
 
 	m_symbolName = {};
-	m_node = nullptr;
+	m_declarationToRename = nullptr;
 	m_sourceUnits = { &m_server.compilerStack().ast(sourceUnitName) };
 	m_locations.clear();
 
@@ -62,14 +62,14 @@ void RenameSymbol::operator()(MessageID _id, Json::Value const& _args)
 				{
 					solAssert(symbolAlias.alias);
 					m_symbolName = *symbolAlias.alias;
-					m_node = importDirective;
+					m_declarationToRename = importDirective;
 					break;
 				}
 		}
-		else if (declaration->nameLocation().containsOffset(*sourcePos)
+		else if (declaration->nameLocation().containsOffset(*sourcePos))
 		{
 			m_symbolName = declaration->name();
-			m_node = declaration;
+			m_declarationToRename = declaration;
 		}
 	}
 	else if (auto const* identifier = dynamic_cast<Identifier const*>(sourceNode))
@@ -77,13 +77,13 @@ void RenameSymbol::operator()(MessageID _id, Json::Value const& _args)
 		if (auto const* declReference = dynamic_cast<Declaration const*>(identifier->annotation().referencedDeclaration))
 		{
 			m_symbolName = identifier->name();
-			m_node = declReference;
+			m_declarationToRename = declReference;
 		}
 	}
 	else if (auto const* identifierPath = dynamic_cast<IdentifierPath const*>(sourceNode))
 		if (auto const* declReference = dynamic_cast<Declaration const*>(identifierPath->annotation().referencedDeclaration))
 		{
-			m_node = declReference;
+			m_declarationToRename = declReference;
 			m_symbolName = to_string(fmt::join(identifierPath->path(), "."));
 		}
 
@@ -145,7 +145,7 @@ void RenameSymbol::Visitor::endVisit(frontend::ImportDirective const& _node)
 {
 	// If an import directive is to be renamed, it can only be because it
 	// defines the symbol that is being renamed.
-	if (&_node != m_outer.m_node)
+	if (&_node != m_outer.m_declarationToRename)
 		return;
 
 	size_t const sizeBefore = m_outer.m_locations.size();
@@ -159,5 +159,21 @@ void RenameSymbol::Visitor::endVisit(frontend::ImportDirective const& _node)
 
 void RenameSymbol::Visitor::endVisit(frontend::IdentifierPath const& _node)
 {
-	if (_node.
+	std::vector<Declaration const*>& declarations = _node.annotation().pathDeclarations;
+	solAssert(declarations.size() == _node.path().size());
+
+	// TODO change to LogMessage -> https://microsoft.github.io/language-server-protocol/specifications/specification-3-14/#window_logMessage
+	solAssert(
+		!_node.pathLocations().empty(),
+		"Path Locations empty. LSP running with imported AST-JSON code?"
+	);
+
+	for (size_t i = 0; i < _node.path().size(); i++)
+	{
+		if (
+			_node.path()[i] == m_outer.m_symbolName &&
+			declarations[i] == m_outer.m_declarationToRename
+		)
+			m_outer.m_locations.emplace_back(_node.pathLocations()[i]);
+	}
 }

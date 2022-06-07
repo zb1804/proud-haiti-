@@ -44,7 +44,7 @@ protected:
 	};
 
 	// Node to rename
-	frontend::Declaration const* m_node = nullptr;
+	frontend::Declaration const* m_declarationToRename = nullptr;
 	// Original name
 	frontend::ASTString m_symbolName = {};
 	// SourceUnits to search & replace symbol in
