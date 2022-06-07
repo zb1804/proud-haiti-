@@ -816,17 +816,17 @@ string YulUtilFunctions::overflowCheckedIntSubFunction(IntegerType const& _type)
 						if and(slt(y, 0), slt(diff, x)) { <panic>() }
 					<!256bit>
 						// underflow, if y >= 0 and diff < minValue
-						if and(iszero(slt(y, 0), slt(diff, <minValue>)) { <panic>() }
+						if and(iszero(slt(y, 0)), slt(diff, <minValue>)) { <panic>() }
 						// overflow, if y < 0 and diff > maxValue
-						if and(slt(y, 0), sgt(diff, <maxValue>))
+						if and(slt(y, 0), sgt(diff, <maxValue>)) { <panic>() }
 					</256bit>
 				<!signed>
 					<?256bit>
 						//underflow if diff > x
-						if iszero(lt(diff, x)) { <panic>() }
+						if gt(diff, x) { <panic>() }
 					<!256bit>
-						//underflow if diff < minValue (?)
-						if lt(diff, <minValue>) { <panic>() }
+						//underflow if diff > maxValue
+						if gt(diff, <maxValue>) { <panic>() }
 					</256bit>
 				</signed>
 			}
